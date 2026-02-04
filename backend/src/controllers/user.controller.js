@@ -1,6 +1,7 @@
 import {user} from "../models/users.models.js";
 import bcrypt,{hash} from "bcrypt";
 import httpStatus from "http-status";
+import crypto from "crypto";
 
 // User Registration Controller
 const register = async (req , res)=>{
@@ -36,22 +37,24 @@ const login = async (req , res) =>{
     }
     
     try {
-        const user  = await user.find({username});
-        if (!user){
+        const foundUser  = await user.findOne({username});
+        if (!foundUser){
             return res.status(httpStatus.NOT_FOUND).json({message:"User not found"});
         }
 
-        if(bcrypt.compare(passsword,user.password)){
+        const isPasswordValid = await bcrypt.compare(password, foundUser.password);
+        if(isPasswordValid){
             let token = crypto.randomBytes(20).toString("hex");
 
-            user.token = token;
-            await user.save();
+            foundUser.token = token;
+            await foundUser.save();
             return res.status(httpStatus.OK).json({token:token})
+        }
+        else {
+            return res.status(httpStatus.UNAUTHORIZED).json({message:"Invalid password"});
         }
 
     }
-    
-
     catch(e){
         return res.status(500).json({message:"smthng went wrong"})
     }
