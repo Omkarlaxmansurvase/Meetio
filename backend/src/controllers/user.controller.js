@@ -5,7 +5,7 @@ import crypto from "crypto";
 
 // User Registration Controller
 const register = async (req , res)=>{
-    const {name,username,email,password} = req.body;
+    const {name,username,password} = req.body;
 
     try {
             const existingUser = await user.findOne({username});
@@ -18,7 +18,7 @@ const register = async (req , res)=>{
             const newUser = new user({
                 name:name,
                 username:username,
-                email:email,
+                // email:email,
                 password:hashedPassword,
             })
             await newUser.save();
@@ -51,7 +51,7 @@ const login = async (req , res) =>{
             return res.status(httpStatus.OK).json({token:token})
         }
         else {
-            return res.status(httpStatus.UNAUTHORIZED).json({message:"Invalid password"});
+            return res.status(httpStatus.UNAUTHORIZED).json({message:"Invalid username or password"});
         }
 
     }
