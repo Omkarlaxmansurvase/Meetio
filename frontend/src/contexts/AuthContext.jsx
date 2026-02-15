@@ -2,22 +2,18 @@ import axios from "axios";
 import httpStatus from "http-status";
 import { createContext, useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import server from "axios";
 
 
 export const AuthContext = createContext({});
 
 const client = axios.create({
-    baseURL: `${server}/api/v1/users`
+    baseURL: `http://localhost:4000/api/v1/users`
 })
 
 
 export const AuthProvider = ({ children }) => {
 
-    const authContext = useContext(AuthContext);
-
-
-    const [userData, setUserData] = useState(authContext);
+    const [userData, setUserData] = useState(null);
 
 
     const router = useNavigate();
@@ -27,7 +23,6 @@ export const AuthProvider = ({ children }) => {
             let request = await client.post("/register", {
                 name: name,
                 username: username,
-                // email:email,
                 password: password
             })
 
@@ -67,8 +62,7 @@ export const AuthProvider = ({ children }) => {
                 }
             });
             return request.data
-        } catch
-         (err) {
+        } catch (err) {
             throw err;
         }
     }
