@@ -1,10 +1,12 @@
 .landingPageContainer {
   width: 100vw;
   height: 100vh;
-  background: url("/public/background.png");
+  /* background: url("/public/background.png"); */
+  
   background-repeat: no-repeat;
   background-size: cover;
-  color: white;
+  background-color: #F3F4E5;
+  color: rgb(17, 0, 0);
 }
 
 .landingPageContainer nav {
@@ -21,7 +23,7 @@
   font-weight: 500;
 }
 
-.landingPageContainer nav .navList {
+.landingPageContainer nav .navlist {
   display: flex;
   gap: 1.6rem;
   cursor: pointer;
