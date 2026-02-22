@@ -5,6 +5,8 @@ import "../App.css";
 import { Button, IconButton, TextField } from '@mui/material';
 import RestoreIcon from '@mui/icons-material/Restore';
 import { AuthContext } from '../contexts/AuthContext';
+import { Player } from '@lottiefiles/react-lottie-player';
+
 
 function HomeComponent() {
   let navigate = useNavigate();
@@ -254,12 +256,16 @@ function HomeComponent() {
         </div>
 
         <div className='rightPanel'>
-          <img
-            className="home-image"
-            src='/logo3.png'
-            alt="Meetio illustration"
-            style={{ opacity: 0 }}
-          />
+          <Player
+                        className="home-image"
+                        autoplay
+                        loop
+                        src="/animations/working-guy.json"
+                        style={{
+                          height: 'clamp(300px, 55vh, 500px)',
+                          width: 'auto',
+                        }}
+                      />
         </div>
       </div>
 
