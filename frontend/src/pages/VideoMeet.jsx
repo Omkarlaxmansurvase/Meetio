@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import io from "socket.io-client";
-import { Badge, IconButton, TextField } from '@mui/material';
+import { Badge, IconButton, TextField, Tooltip } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import VideocamOffIcon from '@mui/icons-material/VideocamOff'
 import styles from "../styles/videoComponent.module.css";
@@ -12,6 +12,9 @@ import StopScreenShareIcon from '@mui/icons-material/StopScreenShare'
 import ChatIcon from '@mui/icons-material/Chat'
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
+import ExpandIcon from '@mui/icons-material/Fullscreen';
+import MinimizeIcon from '@mui/icons-material/FullscreenExit';
+import PeopleIcon from '@mui/icons-material/People';
 import server from '../environment';
 
 const server_url = server;
@@ -40,6 +43,8 @@ export default function VideoMeetComponent() {
   const videoRef = useRef([])
   let [videos, setVideos] = useState([])
   const chatBottomRef = useRef(null);
+  let [fullscreenVideo, setFullscreenVideo] = useState(null);
+  let [showParticipants, setShowParticipants] = useState(false);
 
   useEffect(() => { getPermissions(); }, [])
 
@@ -140,10 +145,8 @@ export default function VideoMeetComponent() {
     stream.getTracks().forEach(track => track.onended = () => {
       setScreen(false);
 
-      // Stop current screen tracks
       try { localVideoref.current.srcObject.getTracks().forEach(t => t.stop()); } catch (e) { console.log(e) }
 
-      // Switch back to camera and re-negotiate with ALL peers so they see camera not screen
       navigator.mediaDevices.getUserMedia({ video: videoAvailable, audio: audioAvailable })
         .then((cameraStream) => {
           window.localStream = cameraStream;
@@ -151,7 +154,6 @@ export default function VideoMeetComponent() {
 
           for (let id in connections) {
             if (id === socketIdRef.current) continue;
-            // Replace existing tracks so peers update without adding duplicate streams
             const senders = connections[id].getSenders();
             cameraStream.getTracks().forEach(newTrack => {
               const sender = senders.find(s => s.track && s.track.kind === newTrack.kind);
@@ -161,7 +163,6 @@ export default function VideoMeetComponent() {
                 connections[id].addTrack(newTrack, cameraStream);
               }
             });
-            // Send new offer so remote side updates
             connections[id].createOffer().then(description => {
               connections[id].setLocalDescription(description).then(() => {
                 socketRef.current.emit('signal', id, JSON.stringify({ 'sdp': connections[id].localDescription }));
@@ -170,7 +171,6 @@ export default function VideoMeetComponent() {
           }
         })
         .catch(() => {
-          // Fallback to black/silence if camera unavailable
           let blackSilence = (...args) => new MediaStream([black(...args), silence()]);
           window.localStream = blackSilence();
           localVideoref.current.srcObject = window.localStream;
@@ -181,7 +181,6 @@ export default function VideoMeetComponent() {
   let gotMessageFromServer = (fromId, message) => {
     var signal = JSON.parse(message)
     if (fromId !== socketIdRef.current) {
-      // Guard: connection must exist before handling signals
       if (!connections[fromId]) {
         console.warn(`No connection found for ${fromId}, ignoring signal.`);
         return;
@@ -282,14 +281,11 @@ export default function VideoMeetComponent() {
   let handleAudio = () => { setAudio(!audio) }
 
   useEffect(() => {
-    // Only start screen share when screen === true; stopping is handled by track.onended
     if (screen === true) { getDislayMedia(); }
     if (screen === false) {
-      // Explicitly stop screen tracks if user clicked button (not browser stop-share UI)
       try {
         if (localVideoref.current && localVideoref.current.srcObject) {
           localVideoref.current.srcObject.getTracks().forEach(t => t.stop());
-          // Fire onended manually in case browser doesn't fire it
           localVideoref.current.srcObject.getTracks().forEach(t => { if (t.onended) t.onended(); });
         }
       } catch (e) { console.log(e); }
@@ -324,9 +320,10 @@ export default function VideoMeetComponent() {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   };
 
+  const participantCount = videos.length + 1; // +1 for self
+
   return (
     <div>
-      
       {askForUsername === true ? (
         <div className={styles.lobbyContainer}>
           <div style={{ textAlign: 'center', marginBottom: '0.5rem', position: 'relative', zIndex: 2 }}>
@@ -342,12 +339,10 @@ export default function VideoMeetComponent() {
             <h2>Join Meeting</h2>
             <p>Enter your name and preview your camera</p>
 
-            
             <div className={styles.lobbyPreview}>
               <video ref={localVideoref} autoPlay muted style={{ width: '100%', borderRadius: '14px' }} />
             </div>
 
-            
             <TextField
               fullWidth
               label="Your display name"
@@ -394,9 +389,38 @@ export default function VideoMeetComponent() {
           `}</style>
         </div>
       ) : (
-        
         <div className={styles.meetVideoContainer}>
-          
+          {/* FULLSCREEN VIDEO VIEW */}
+          {fullscreenVideo && (
+            <div className={styles.fullscreenOverlay}>
+              <div className={styles.fullscreenContent}>
+                <video
+                  ref={ref => {
+                    if (ref && fullscreenVideo.stream) {
+                      ref.srcObject = fullscreenVideo.stream;
+                    }
+                  }}
+                  autoPlay
+                  className={styles.fullscreenVideo}
+                />
+                <Tooltip title="Exit Fullscreen">
+                  <IconButton
+                    onClick={() => setFullscreenVideo(null)}
+                    className={styles.exitFullscreenBtn}
+                    sx={{
+                      position: 'absolute', top: '20px', right: '20px',
+                      background: 'rgba(0,0,0,0.5)', color: 'white',
+                      '&:hover': { background: 'rgba(0,0,0,0.7)' }
+                    }}
+                  >
+                    <MinimizeIcon />
+                  </IconButton>
+                </Tooltip>
+              </div>
+            </div>
+          )}
+
+          {/* CHAT ROOM */}
           {showModal && (
             <div className={styles.chatRoom}>
               <div className={styles.chatContainer}>
@@ -442,89 +466,168 @@ export default function VideoMeetComponent() {
                       '& input::placeholder': { color: 'rgba(255,200,120,0.3)' },
                     }}
                   />
-                  <IconButton
-                    onClick={sendMessage}
-                    sx={{
-                      color: message.trim() ? '#FF9839' : 'rgba(255,255,255,0.2)',
-                      background: message.trim() ? 'rgba(217,117,0,0.15)' : 'transparent',
-                      borderRadius: '10px',
-                      transition: 'all 0.2s',
-                      '&:hover': { background: 'rgba(217,117,0,0.25)', color: '#FF9839' }
-                    }}
-                  >
-                    <SendIcon sx={{ fontSize: '1.1rem' }} />
-                  </IconButton>
+                  <Tooltip title="Send message">
+                    <IconButton
+                      onClick={sendMessage}
+                      sx={{
+                        color: message.trim() ? '#FF9839' : 'rgba(255,255,255,0.2)',
+                        background: message.trim() ? 'rgba(217,117,0,0.15)' : 'transparent',
+                        borderRadius: '10px',
+                        transition: 'all 0.2s',
+                        '&:hover': { background: 'rgba(217,117,0,0.25)', color: '#FF9839' }
+                      }}
+                    >
+                      <SendIcon sx={{ fontSize: '1.1rem' }} />
+                    </IconButton>
+                  </Tooltip>
                 </div>
               </div>
             </div>
           )}
 
-          
-          <div className={styles.conferenceView} style={{ paddingRight: showModal ? '340px' : '20px' }}>
-            {videos.map((video) => (
-              <div key={video.socketId} style={{ position: 'relative' }}>
-                <video
-                  data-socket={video.socketId}
-                  ref={ref => { if (ref && video.stream) { ref.srcObject = video.stream; } }}
-                  autoPlay
-                />
+          {/* PARTICIPANTS PANEL */}
+          {showParticipants && (
+            <div className={styles.participantsPanel}>
+              <div className={styles.participantsHeader}>
+                <h3>Participants ({participantCount})</h3>
+                <IconButton onClick={() => setShowParticipants(false)} sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: 'white' }, padding: '4px' }}>
+                  <CloseIcon sx={{ fontSize: '1.1rem' }} />
+                </IconButton>
               </div>
-            ))}
+
+              <div className={styles.participantsList}>
+                <div className={styles.participantItem}>
+                  <div className={styles.participantAvatar}>You</div>
+                  <div className={styles.participantName}>{username}</div>
+                </div>
+                {videos.map((video) => (
+                  <div key={video.socketId} className={styles.participantItem}>
+                    <div className={styles.participantAvatar}>{video.socketId.substring(0, 2).toUpperCase()}</div>
+                    <div className={styles.participantName}>Participant</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ENHANCED GRID VIEW */}
+          <div className={styles.gridContainer} style={{ paddingRight: showModal ? '340px' : showParticipants ? '300px' : '20px' }}>
+            <div className={`${styles.videoGrid} ${styles[`grid-${Math.min(videos.length + 1, 4)}`]}`}>
+              {/* Local video in grid */}
+              <div className={styles.videoGridItem} onDoubleClick={() => setFullscreenVideo({ stream: localVideoref.current?.srcObject })}>
+                <video 
+                  className={styles.gridVideo}
+                  ref={localVideoref} 
+                  autoPlay 
+                  muted 
+                />
+                <div className={styles.videoLabel}>
+                  <span className={styles.videoName}>{username}</span>
+                  <span className={styles.audioIndicator} style={{ background: audio ? '#4CAF50' : '#ff5252' }} />
+                </div>
+                <Tooltip title="Fullscreen">
+                  <IconButton className={styles.gridVideoControl} sx={{ fontSize: '0.8rem' }}>
+                    <ExpandIcon sx={{ fontSize: '1rem' }} />
+                  </IconButton>
+                </Tooltip>
+              </div>
+
+              {/* Remote videos in grid */}
+              {videos.map((video) => (
+                <div 
+                  key={video.socketId} 
+                  className={styles.videoGridItem}
+                  onDoubleClick={() => setFullscreenVideo(video)}
+                >
+                  <video
+                    className={styles.gridVideo}
+                    data-socket={video.socketId}
+                    ref={ref => { if (ref && video.stream) { ref.srcObject = video.stream; } }}
+                    autoPlay
+                  />
+                  <div className={styles.videoLabel}>
+                    <span className={styles.videoName}>Participant</span>
+                  </div>
+                  <Tooltip title="Fullscreen">
+                    <IconButton 
+                      className={styles.gridVideoControl}
+                      onClick={() => setFullscreenVideo(video)}
+                      sx={{ fontSize: '0.8rem' }}
+                    >
+                      <ExpandIcon sx={{ fontSize: '1rem' }} />
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              ))}
+            </div>
           </div>
 
-          
-          <video className={styles.meetUserVideo} ref={localVideoref} autoPlay muted />
-
-          
+          {/* CONTROL BAR */}
           <div className={styles.buttonContainers}>
-            
-            <div
-              className={`${styles.controlBtn} ${audio ? styles.active : ''}`}
-              onClick={handleAudio}
-              title={audio ? 'Mute' : 'Unmute'}
-            >
-              {audio ? <MicIcon sx={{ fontSize: '1.3rem' }} /> : <MicOffIcon sx={{ fontSize: '1.3rem', color: '#ff6b6b' }} />}
-            </div>
-
-            
-            <div className={`${styles.controlBtn} ${styles.endCall}`} onClick={handleEndCall} title="End call">
-              <CallEndIcon sx={{ fontSize: '1.4rem', color: 'white' }} />
-            </div>
-
-            
-            <div
-              className={`${styles.controlBtn} ${video ? styles.active : ''}`}
-              onClick={handleVideo}
-              title={video ? 'Turn off camera' : 'Turn on camera'}
-            >
-              {video ? <VideocamIcon sx={{ fontSize: '1.3rem' }} /> : <VideocamOffIcon sx={{ fontSize: '1.3rem', color: '#ff6b6b' }} />}
-            </div>
-
-            
-            {screenAvailable && (
+            <Tooltip title={audio ? "Mute" : "Unmute"}>
               <div
-                className={`${styles.controlBtn} ${screen ? styles.active : ''}`}
-                onClick={handleScreen}
-                title={screen ? 'Stop sharing' : 'Share screen'}
+                className={`${styles.controlBtn} ${audio ? styles.active : ''}`}
+                onClick={handleAudio}
               >
-                {screen ? <ScreenShareIcon sx={{ fontSize: '1.3rem' }} /> : <StopScreenShareIcon sx={{ fontSize: '1.3rem' }} />}
+                {audio ? <MicIcon sx={{ fontSize: '1.3rem' }} /> : <MicOffIcon sx={{ fontSize: '1.3rem', color: '#ff6b6b' }} />}
               </div>
+            </Tooltip>
+
+            <Tooltip title="End Call">
+              <div className={`${styles.controlBtn} ${styles.endCall}`} onClick={handleEndCall}>
+                <CallEndIcon sx={{ fontSize: '1.4rem', color: 'white' }} />
+              </div>
+            </Tooltip>
+
+            <Tooltip title={video ? "Turn off camera" : "Turn on camera"}>
+              <div
+                className={`${styles.controlBtn} ${video ? styles.active : ''}`}
+                onClick={handleVideo}
+              >
+                {video ? <VideocamIcon sx={{ fontSize: '1.3rem' }} /> : <VideocamOffIcon sx={{ fontSize: '1.3rem', color: '#ff6b6b' }} />}
+              </div>
+            </Tooltip>
+
+            {screenAvailable && (
+              <Tooltip title={screen ? "Stop sharing" : "Share screen"}>
+                <div
+                  className={`${styles.controlBtn} ${screen ? styles.active : ''}`}
+                  onClick={handleScreen}
+                >
+                  {screen ? <ScreenShareIcon sx={{ fontSize: '1.3rem' }} /> : <StopScreenShareIcon sx={{ fontSize: '1.3rem' }} />}
+                </div>
+              </Tooltip>
             )}
 
-            
-            <Badge
-              badgeContent={newMessages}
-              max={99}
-              sx={{ '& .MuiBadge-badge': { background: '#D97500', color: 'white', fontFamily: "'DM Sans', sans-serif" } }}
-            >
+            <Tooltip title="Participants">
               <div
-                className={`${styles.controlBtn} ${showModal ? styles.active : ''}`}
-                onClick={() => { setModal(!showModal); setNewMessages(0); }}
-                title="Chat"
+                className={`${styles.controlBtn} ${showParticipants ? styles.active : ''}`}
+                onClick={() => setShowParticipants(!showParticipants)}
               >
-                <ChatIcon sx={{ fontSize: '1.3rem' }} />
+                <Badge
+                  badgeContent={participantCount}
+                  max={99}
+                  sx={{ '& .MuiBadge-badge': { background: '#D97500', color: 'white', fontFamily: "'DM Sans', sans-serif", fontSize: '0.65rem' } }}
+                >
+                  <PeopleIcon sx={{ fontSize: '1.3rem' }} />
+                </Badge>
               </div>
-            </Badge>
+            </Tooltip>
+
+            <Tooltip title="Chat">
+              <Badge
+                badgeContent={newMessages}
+                max={99}
+                sx={{ '& .MuiBadge-badge': { background: '#D97500', color: 'white', fontFamily: "'DM Sans', sans-serif" } }}
+              >
+                <div
+                  className={`${styles.controlBtn} ${showModal ? styles.active : ''}`}
+                  onClick={() => { setModal(!showModal); setNewMessages(0); }}
+                >
+                  <ChatIcon sx={{ fontSize: '1.3rem' }} />
+                </div>
+              </Badge>
+            </Tooltip>
           </div>
         </div>
       )}
