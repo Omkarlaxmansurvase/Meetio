@@ -138,7 +138,7 @@ export default function LandingPage() {
               className="hero-img"
               autoplay
               loop
-              src="/animations/video-call.json"
+              src="/animations/Video-call.json"
               style={{
                 opacity: 0,
                 height: 'clamp(300px, 55vh, 500px)',
