@@ -2,7 +2,7 @@
 const server =  
     // "https://apnacollegebackend.onrender.com" :
 
-    "http://localhost:8000"
+    "https://meetio-w29k.onrender.com"
 
 
 export default server;
