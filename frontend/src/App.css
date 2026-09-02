@@ -415,3 +415,175 @@ html::-webkit-scrollbar {
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
   background-repeat: repeat;
 }
+
+/* Responsive layouts */
+@media (max-width: 768px) {
+  .landingPageContainer nav {
+    padding: 1rem 1.25rem;
+  }
+
+  .landingPageContainer nav h2 {
+    font-size: 1.55rem;
+  }
+
+  .landingPageContainer nav .navlist {
+    gap: 0.15rem;
+  }
+
+  .landingPageContainer nav .navlist p {
+    padding: 0.45rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .navlist div[role='button'] {
+    padding: 0.45rem 0.8rem;
+  }
+
+  .landingMainContainer {
+    min-height: auto;
+    padding: 3rem 1.5rem 2rem;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .landingMainContainer > div:nth-child(1) {
+    max-width: none;
+  }
+
+  .landingMainContainer > div:nth-child(1) h1 {
+    font-size: clamp(2.35rem, 11vw, 3.2rem);
+  }
+
+  .landingMainContainer > div:nth-child(1) p {
+    font-size: 1rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .featureBadges {
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .featureBadge {
+    font-size: 0.75rem;
+    padding: 0.35rem 0.65rem;
+  }
+
+  .landingMainContainer > div:nth-child(1) div[role='button'] {
+    margin: 0 auto;
+    padding: 0.9rem 1.6rem;
+  }
+
+  .landingMainContainer > div:nth-child(2) img {
+    height: auto;
+    width: min(78vw, 360px);
+    margin-top: 0.5rem;
+  }
+
+  .navBar {
+    padding: 0.85rem 1rem;
+  }
+
+  .navBar h2 {
+    font-size: 1.35rem;
+  }
+
+  .meetContainer {
+    min-height: calc(100vh - 62px);
+    padding: 2rem 1.25rem;
+    gap: 1.75rem;
+    flex-direction: column;
+    justify-content: flex-start;
+    text-align: center;
+  }
+
+  .leftPanel {
+    width: 100%;
+    max-width: 540px;
+  }
+
+  .home-input-group {
+    flex-direction: column;
+    align-items: stretch !important;
+  }
+
+  .home-input-group .MuiButton-root {
+    width: 100%;
+  }
+
+  .rightPanel > img {
+    width: min(72vw, 300px);
+  }
+
+  .auth-page {
+    height: auto !important;
+    min-height: 100dvh;
+    overflow: auto !important;
+    flex-direction: column;
+  }
+
+  .auth-left {
+    flex: none !important;
+    min-height: 260px;
+    padding: 2.5rem 1.5rem !important;
+  }
+
+  .auth-right {
+    flex: none !important;
+    width: 100%;
+    min-height: calc(100dvh - 260px);
+    padding: 4.5rem 1.5rem 2rem !important;
+  }
+
+  .history-header {
+    padding: 0.9rem 1rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Only hide the standalone "Join as Guest" link. The Login label is also
+     a <p>, but it lives inside the button and must remain visible. */
+  .landingPageContainer nav .navlist > p:first-child {
+    display: none;
+  }
+
+  .landingMainContainer {
+    padding: 2.25rem 1rem 1.5rem;
+  }
+
+  .landingMainContainer > div:nth-child(1) h1 {
+    letter-spacing: -1px;
+  }
+
+  .meetContainer {
+    padding: 1.5rem 1rem;
+  }
+
+  .auth-left {
+    min-height: 220px;
+    padding: 2rem 1.25rem !important;
+  }
+
+  .auth-left > div:nth-child(3) > p {
+    margin-bottom: 1.5rem !important;
+  }
+
+  .auth-right {
+    min-height: auto;
+    padding: 4rem 1.25rem 1.75rem !important;
+  }
+
+  .history-header h1 {
+    display: none;
+  }
+
+  .history-page > div:nth-of-type(3) {
+    padding: 1.5rem 1rem !important;
+  }
+
+  .history-card {
+    padding: 1rem !important;
+  }
+}

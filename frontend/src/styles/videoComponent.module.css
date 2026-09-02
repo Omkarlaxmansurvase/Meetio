@@ -31,7 +31,8 @@
     height: 100%;
     height: calc(100vh - 80px);
     z-index: 2;
-    overflow: hidden;
+    overflow: auto;
+    padding-bottom: 8px;
 }
 
 .videoGrid {
@@ -103,6 +104,10 @@
 
     .videoGrid.grid-2 {
         grid-template-columns: 1fr;
+    }
+
+    .videoGridItem {
+        min-height: 160px;
     }
 }
 
@@ -583,7 +588,8 @@
 /* ============ MOBILE RESPONSIVE ============ */
 @media (max-width: 768px) {
     .gridContainer {
-        padding-right: 20px;
+        height: calc(100dvh - 72px);
+        padding: 0 8px 8px;
     }
 
     .videoGrid {
@@ -601,7 +607,7 @@
     .chatRoom,
     .participantsPanel {
         width: 100%;
-        height: 50%;
+        height: min(70%, 520px);
         top: auto;
         right: auto;
         border-left: none;
@@ -610,8 +616,8 @@
     }
 
     .buttonContainers {
-        gap: 8px;
-        padding: 12px;
+        gap: 6px;
+        padding: 10px 8px max(10px, env(safe-area-inset-bottom));
     }
 
     .controlBtn {
@@ -620,7 +626,23 @@
     }
 
     .controlBtn.endCall {
-        width: 50px;
+        width: 45px;
+    }
+
+    .lobbyContainer {
+        height: 100dvh;
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .lobbyCard {
+        width: 100%;
+        max-width: 420px;
+        padding: 1.5rem;
+    }
+
+    .lobbyPreview {
+        min-height: 0;
     }
 }
 
@@ -640,5 +662,43 @@
 
     .videoName {
         font-size: 0.75rem;
+    }
+
+    .meetVideoContainer {
+        height: 100dvh;
+    }
+
+    .videoGrid.grid-1 {
+        padding: 8px;
+    }
+
+    .videoGrid.grid-1 .videoGridItem {
+        height: auto;
+        max-width: none;
+    }
+
+    .controlBtn {
+        width: 40px;
+        height: 40px;
+    }
+
+    .controlBtn.endCall {
+        width: 42px;
+        height: 40px;
+    }
+
+    .buttonContainers svg {
+        font-size: 1.15rem;
+    }
+
+    .fullscreenContent {
+        width: 100vw;
+        height: 100dvh;
+        border-radius: 0;
+    }
+
+    .exitFullscreenBtn {
+        top: 10px !important;
+        right: 10px !important;
     }
 }

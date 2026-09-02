@@ -95,7 +95,7 @@ export default function Authentication() {
   };
 
   return (
-    <div style={{
+    <div className="auth-page" style={{
       width: '100vw', height: '100vh', display: 'flex',
       background: '#F3F4E5', fontFamily: "'DM Sans', sans-serif",
       overflow: 'hidden', position: 'relative',

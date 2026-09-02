@@ -49,7 +49,7 @@ export default function History() {
   };
 
   return (
-    <div style={{
+    <div className="history-page" style={{
       minHeight: '100vh', background: '#F3F4E5',
       fontFamily: "'DM Sans', sans-serif", position: 'relative'
     }}>
